@@ -32,15 +32,15 @@ def filter_kf(
         measurement_fn, state_fn
 ):
     lr = jnp.exp(log_lr)
-    agent = rkf.ExtendedKalmanFilterIMQ(
-        state_fn, measurement_fn,
+    agent = rkf.ExtendedFilterIMQ(
+        mean_fn=measurement_fn,
+        cov_fn=lambda _: observation_covariance,
         dynamics_covariance=dynamics_covariance,
-        observation_covariance=observation_covariance,
         soft_threshold=1e8,
     )
     
     init_bel = agent.init_bel(params_init, cov=lr)
-    callback = partial(callback_fn, applyfn=agent.vobs_fn)
+    callback = partial(callback_fn, applyfn=agent.predict_fn)
     _, yhat_pp = agent.scan(init_bel, measurements, covariates, callback_fn=callback)
     
     return yhat_pp.squeeze()
@@ -54,10 +54,10 @@ def filter_kfb(
     lr = jnp.exp(log_lr)
     n_inner = n_inner.astype(int)
     
-    agent = rkf.ExtendedKalmanFilterBernoulli(
-        state_fn, measurement_fn,
+    agent = rkf.ExtendedFilterBernoulli(
+        mean_fn=measurement_fn,
+        cov_fn=lambda _: observation_covariance,
         dynamics_covariance=dynamics_covariance,
-        observation_covariance=observation_covariance,
         alpha=alpha,
         beta=beta,
         tol_inlier=1e-7,
@@ -65,7 +65,7 @@ def filter_kfb(
     )
     
     init_bel = agent.init_bel(params_init, cov=lr)
-    callback = partial(callback_fn, applyfn=agent.vobs_fn)
+    callback = partial(callback_fn, applyfn=agent.predict_fn)
     _, yhat_pp = agent.scan(init_bel, measurements, covariates, callback_fn=callback)
     
     return yhat_pp.squeeze()
@@ -79,8 +79,8 @@ def filter_kfiw(
     lr = jnp.exp(log_lr)
     n_inner = n_inner.astype(int)
     
-    agent = rkf.ExtendedKalmanFilterInverseWishart(
-        state_fn, measurement_fn,
+    agent = rkf.ExtendedFilterInverseWishart(
+        mean_fn=measurement_fn,
         dynamics_covariance=dynamics_covariance,
         prior_observation_covariance=observation_covariance,
         n_inner=n_inner,
@@ -88,7 +88,7 @@ def filter_kfiw(
     )
     
     init_bel = agent.init_bel(params_init, cov=lr)
-    callback = partial(callback_fn, applyfn=agent.vobs_fn)
+    callback = partial(callback_fn, applyfn=agent.predict_fn)
     _, yhat_pp = agent.scan(init_bel, measurements, covariates, callback_fn=callback)
     
     return yhat_pp.squeeze()
@@ -100,15 +100,15 @@ def filter_wlfimq(
         measurement_fn, state_fn
 ):
     lr = jnp.exp(log_lr)
-    agent = rkf.ExtendedKalmanFilterIMQ(
-        state_fn, measurement_fn,
+    agent = rkf.ExtendedFilterIMQ(
+        mean_fn=measurement_fn,
+        cov_fn=lambda _: observation_covariance,
         dynamics_covariance=dynamics_covariance,
-        observation_covariance=observation_covariance,
         soft_threshold=soft_threshold,
     )
     
     init_bel = agent.init_bel(params_init, cov=lr)
-    callback = partial(callback_fn, applyfn=agent.vobs_fn)
+    callback = partial(callback_fn, applyfn=agent.predict_fn)
     _, yhat_pp = agent.scan(init_bel, measurements, covariates, callback_fn=callback)
     
     return yhat_pp.squeeze()
@@ -120,15 +120,15 @@ def filter_wlfmd(
         measurement_fn, state_fn
 ):
     lr = jnp.exp(log_lr)
-    agent = rkf.ExtendedKalmanFilterMD(
-        state_fn, measurement_fn,
+    agent = rkf.ExtendedFilterMD(
+        mean_fn=measurement_fn,
+        cov_fn=lambda _: observation_covariance,
         dynamics_covariance=dynamics_covariance,
-        observation_covariance=observation_covariance,
         threshold=threshold,
     )
     
     init_bel = agent.init_bel(params_init, cov=lr)
-    callback = partial(callback_fn, applyfn=agent.vobs_fn)
+    callback = partial(callback_fn, applyfn=agent.predict_fn)
     _, yhat_pp = agent.scan(init_bel, measurements, covariates, callback_fn=callback)
     
     return yhat_pp.squeeze()

@@ -155,15 +155,15 @@ print("-" * 20, "KF", "-" * 20)
 def filter_kf(log_lr, measurements, covariates):
     lr = jnp.exp(log_lr)
     nsteps = len(measurements)
-    agent = rkf.ExtendedKalmanFilterIMQ(
-        latent_fn, measurement_fn,
+    agent = rkf.ExtendedFilterIMQ(
+        mean_fn=measurement_fn,
+        cov_fn=lambda _: observation_covariance,
         dynamics_covariance=Q,
-        observation_covariance=observation_covariance,
         soft_threshold=1e8,
     )
     
     init_bel = agent.init_bel(params_init, cov=lr)
-    callback = partial(callback_fn, applyfn=agent.vobs_fn)
+    callback = partial(callback_fn, applyfn=agent.predict_fn)
     bel, yhat_pp = agent.scan(init_bel, measurements, covariates, callback_fn=callback)
     
     # out = (agent, bel)
@@ -214,10 +214,10 @@ def filter_kfb(log_lr, alpha, beta, n_inner, measurements, covariates):
     lr = jnp.exp(log_lr)
     n_inner = n_inner.astype(int)
     
-    agent = rkf.ExtendedKalmanFilterBernoulli(
-        latent_fn, measurement_fn,
+    agent = rkf.ExtendedFilterBernoulli(
+        mean_fn=measurement_fn,
+        cov_fn=lambda _: observation_covariance,
         dynamics_covariance=Q,
-        observation_covariance=observation_covariance,
         alpha=alpha,
         beta=beta,
         tol_inlier=1e-7,
@@ -225,7 +225,7 @@ def filter_kfb(log_lr, alpha, beta, n_inner, measurements, covariates):
     )
     
     init_bel = agent.init_bel(params_init, cov=lr)
-    callback = partial(callback_fn, applyfn=agent.vobs_fn)
+    callback = partial(callback_fn, applyfn=agent.predict_fn)
     _, yhat_pp = agent.scan(init_bel, measurements, covariates, callback_fn=callback)
     
     return yhat_pp.squeeze()
@@ -280,8 +280,8 @@ def filter_kfiw(log_lr, noise_scaling, n_inner, measurements, covariates):
     lr = jnp.exp(log_lr)
     n_inner = n_inner.astype(int)
     
-    agent = rkf.ExtendedKalmanFilterInverseWishart(
-        latent_fn, measurement_fn,
+    agent = rkf.ExtendedFilterInverseWishart(
+        mean_fn=measurement_fn,
         dynamics_covariance=Q,
         prior_observation_covariance=observation_covariance,
         n_inner=n_inner,
@@ -289,7 +289,7 @@ def filter_kfiw(log_lr, noise_scaling, n_inner, measurements, covariates):
     )
     
     init_bel = agent.init_bel(params_init, cov=lr)
-    callback = partial(callback_fn, applyfn=agent.vobs_fn)
+    callback = partial(callback_fn, applyfn=agent.predict_fn)
     bel, yhat_pp = agent.scan(init_bel, measurements, covariates, callback_fn=callback)
     
     return yhat_pp.squeeze()
@@ -351,15 +351,15 @@ print("-" * 20, "WLF-IMQ", "-" * 20)
 def filter_wlfimq(log_lr, soft_threshold, measurements, covariates):
     lr = jnp.exp(log_lr)
     nsteps = len(measurements)
-    agent = rkf.ExtendedKalmanFilterIMQ(
-        latent_fn, measurement_fn,
+    agent = rkf.ExtendedFilterIMQ(
+        mean_fn=measurement_fn,
+        cov_fn=lambda _: observation_covariance,
         dynamics_covariance=Q,
-        observation_covariance=observation_covariance,
         soft_threshold=soft_threshold,
     )
     
     init_bel = agent.init_bel(params_init, cov=lr)
-    callback = partial(callback_fn, applyfn=agent.vobs_fn)
+    callback = partial(callback_fn, applyfn=agent.predict_fn)
     bel, yhat_pp = agent.scan(init_bel, measurements, covariates, callback_fn=callback)
     
     # out = (agent, bel)
@@ -424,15 +424,15 @@ print("-" * 20, "WLF-MD", "-" * 20)
 def filter_wlfmd(log_lr, threshold, measurements, covariates):
     lr = jnp.exp(log_lr)
     nsteps = len(measurements)
-    agent = rkf.ExtendedKalmanFilterMD(
-        latent_fn, measurement_fn,
+    agent = rkf.ExtendedFilterMD(
+        mean_fn=measurement_fn,
+        cov_fn=lambda _: observation_covariance,
         dynamics_covariance=Q,
-        observation_covariance=observation_covariance,
         threshold=threshold,
     )
     
     init_bel = agent.init_bel(params_init, cov=lr)
-    callback = partial(callback_fn, applyfn=agent.vobs_fn)
+    callback = partial(callback_fn, applyfn=agent.predict_fn)
     bel, yhat_pp = agent.scan(init_bel, measurements, covariates, callback_fn=callback)
     
     # out = (agent, bel)
